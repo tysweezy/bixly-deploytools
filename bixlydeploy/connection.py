@@ -2,8 +2,7 @@ from fabric import Connection as FabConnection
 
 
 class BixlyConnection(object):
-
-
+    
     def __init__(self, host, username=None, password=None, port=None, path=None):
 
         """
