@@ -1,5 +1,7 @@
+import logging
 from fabric import Connection as FabConnection
-
+from fabric.exceptions import GroupException
+from .exceptions import RepoException
 
 class BixlyConnection(object):
     
@@ -30,6 +32,25 @@ class BixlyConnection(object):
 
         return fabconnect
 
+    def pull_from_repo(self, branch='master'):
+        """
+        Pulls from remote repo. User can specify branch.
+
+        Most cases: staging == develop and prod == master
+        default branch will be master
+        """
+        with self.connection:
+            try: 
+                self.connection.run('git stash')
+                self.connection.run('git fetch origin {0}'.format(branch))
+                self.connection.run('git checkout {0}'.format(branch))
+                self.connection.run('git pull origin {0}'.format(branch))
+                logging.info("{0} branch updated on server".format(branch))
+            except RepoException as repo_error:
+                # TODO: should I exit program and close process? 
+                # I don't want the program to continue if there are any problems with git
+                logging.error('git pull proccess failed. could not deploy. {0}'.format(repo_error))
+
  
 class DeployDjango(BixlyConnection):
     
@@ -40,6 +61,15 @@ class DeployDjango(BixlyConnection):
         """
         super(DeployDjango, self).__init__(*args, **kwargs)
         self.connection = self.connect()
+
+    def virtualenv(self):
+        """ 
+        activate virtualenv on server
+
+        cd [to path]
+        run source {venvfolder}/bin/activate
+        """
+        pass
 
     def test_run(self):
         """
